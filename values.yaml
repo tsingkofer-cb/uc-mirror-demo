@@ -1,0 +1,47 @@
+service:
+  type: ClusterIP
+ingress:
+  enabled: false
+
+cloneStaticSiteFromGit:
+  enabled: true
+  repository: https://github.com/tsingkofer-cb/uc-mirror-demo.git
+  branch: main
+
+serverBlock: |- 
+  server {
+      listen 8080;
+      server_name localhost;
+
+      # Envelope Core MM
+      location /envelope-core-mm/update-center.json {
+          alias /app/versions/mm/;
+          set $versioned_file "$arg_version.json";
+
+          # If the $versioned_file is not set or does not exist, return 404
+          if ($arg_version = "") {
+              return 404;
+          }
+
+          try_files $versioned_file =404;
+      }
+
+      # Envelope Core OC
+      location /envelope-core-oc/update-center.json {
+          alias /app/versions/oc/;
+          set $versioned_file "$arg_version.json";
+
+          # If the $versioned_file is not set or does not exist, return 404
+          if ($arg_version = "") {
+              return 404;
+          }
+
+          try_files $versioned_file =404;
+      }
+
+      # Custom health check endpoint
+      location / {
+          return 200 "available";
+          add_header Content-Type text/plain;
+      }
+  }
